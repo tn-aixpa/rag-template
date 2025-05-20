@@ -1,0 +1,71 @@
+ai: NLP
+domain: PA
+usages: ./docs/usage.md
+metadata:
+  name: RAG Application Template
+  description: >
+    A simple RAG application based on LangChain framework 
+  kind: product-template
+  ai: NLP
+  domain: PA
+  license: Apache License 2.0
+usage: ./docs/usage.md
+howto:
+  - title: Store information embeddings in a vector database
+    ref: ./docs/howto/store_embeddings.md
+  - title: Deploy supporting LLM models
+    ref: ./docs/howto/models.md
+  - title: Create a RAG application API
+    ref: ./docs/howto/app.md
+models:
+  - id: chat
+    kind: huggingface
+    name: LLM for text generation
+  - id: embeddings
+    kind: huggingface
+    name: LLM for text embeddings
+operations:
+  - id: embed
+    name: Create embeddings for the reference document and store them in a vector database
+    kind: job
+    task: processing
+    implementation:
+      framework: aixpa
+      spec:
+        kind: python 
+        code_src: "git+https://github.com/tn-aixpa/rag-template" 
+        handler: "src.embedding:embed"
+        python_version: PYTHON3_10
+        requirements: "transformers==4.50.3", "psycopg_binary", "langchain-text-splitters", "langchain-community", "langgraph", "langchain-core", "langchain-huggingface", "langchain_postgres", "langchain[openai]
+    inputs:
+      - url
+deployments:
+  - id: chat
+    name: Expose an LLM for text generation
+    kind: service
+    implementation:
+      framework: aixpa
+      spec:
+        kind: huggingfaceserve 
+        path: huggingface://meta-llama/meta-llama-3-8b-instruct
+  - id: emb
+    name: Expose an LLM for text embeddings
+    kind: service
+    implementation:
+      framework: aixpa
+      spec:
+        kind: huggingfaceserve 
+        huggingface_task: text_embedding
+        path: huggingface://thenlper/gte-base
+  - id: service
+    name: Expose the RAG application API
+    kind: service
+    implementation:
+      framework: aixpa
+      spec:
+        kind: python 
+        code_src: "git+https://github.com/tn-aixpa/rag-template" 
+        handler: "src.serve:serve"
+        init_function: init
+        python_version: PYTHON3_10
+        requirements: "transformers==4.50.3", "psycopg_binary", "langchain-text-splitters", "langchain-community", "langgraph", "langchain-core", "langchain-huggingface", "langchain_postgres", "langchain[openai]"
